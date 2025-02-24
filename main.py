@@ -1,18 +1,18 @@
 from package import Package
+from data_loader import loadPackageData
 from hash_table import ChainingHashTable
 
 myHashTable = ChainingHashTable()
 
-# Create a package
-package = Package(1, "123 Main St", "10:30 AM", "Salt Lake City", "84101", 5.0, "At Hub")
+loadPackageData('./data/package_file.csv', myHashTable)
 
-myHashTable.insert(package.packageID, package)
+print("Print Packages from Hash Table")
 
-package = myHashTable.search(1)
+packageID = 1
 
-if myHashTable.search(1):
-    print(package)
-else:
-    print("error")
-
-
+for packageID in range(1, 41):
+    package = myHashTable.search(packageID)
+    if package:
+        print(package)
+    else:
+        print("Package not found!")
