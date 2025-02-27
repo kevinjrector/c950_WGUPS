@@ -1,18 +1,20 @@
-from package import Package
-from data_loader import loadPackageData
+import data_handler
 from hash_table import ChainingHashTable
 
-myHashTable = ChainingHashTable()
+import truck
 
-loadPackageData('./data/package_file.csv', myHashTable)
+import datetime
 
-print("Print Packages from Hash Table")
 
-packageID = 1
+package_table = ChainingHashTable()
 
-for packageID in range(1, 41):
-    package = myHashTable.search(packageID)
-    if package:
-        print(package)
-    else:
-        print("Package not found!")
+data_handler.loadPackageData('./data/package_file.csv', package_table)
+
+
+    
+
+
+
+
+
+
