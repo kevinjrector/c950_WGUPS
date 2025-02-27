@@ -59,8 +59,10 @@ def deliver_packages(truck, package_table):
             # Remove package from truck inventory
             truck.packageInventory.remove(closest_package)
 
+
             print(f"Truck {truck.truckID} delivered package {closest_package.packageID} to {closest_package.address} at {delivery_time.strftime('%I:%M %p')}.")
 
+            
             # Update current truck time
             current_time = delivery_time
 
@@ -73,7 +75,7 @@ def deliver_packages(truck, package_table):
     # Always update return time
     truck.returnTime = current_time + travel_time_to_hub if current_time != truck.departTime else truck.departTime
 
-    print(f"\nTruck {truck.truckID} completed deliveries and returned to the Hub at {truck.returnTime.strftime('%I:%M %p')}. Total miles: {truck.milesTotal:.2f} miles.\n")
+    print(f"\nTruck {truck.truckID} completed deliveries (Delivered = {packages_delivered}) and returned to the Hub at {truck.returnTime.strftime('%I:%M %p')}. Total miles: {truck.milesTotal:.2f} miles.\n")
 
 
 

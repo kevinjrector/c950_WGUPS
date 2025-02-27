@@ -2,8 +2,8 @@ from truck import Truck
 from driver import Driver
 import datetime
 
+from routing import sortPackages_byDeadline_or_byDistance, deliver_packages, package_table
 
-from routing import sortPackages_byDeadline_or_byDistance, deliver_packages
 
 
 
@@ -72,14 +72,25 @@ for truck in occupied_trucks:
 
 # Load packages onto trucks using strict round-robin assignment
 truck_index = 0  # Start with the first truck
+loaded_packages = set()  # Track loaded package IDs
+updated_sorted_list = []
 
-for package in sorted_package_list:
+for package in sorted_package_list[:]:  # Iterate over a copy of the list
     truck = occupied_trucks[truck_index]  # Select truck based on round-robin index
-    truck.load_package(package)  # Try to load the package
+    if truck.load_package(package):  # Try to load the package
+        loaded_packages.add(package.packageID)  # Track that this package was loaded
 
     # Move to the next truck, wrapping around when reaching the end
     truck_index = (truck_index + 1) % len(occupied_trucks)
 
+  
+
+for package in sorted_package_list:
+    if package.packageID not in loaded_packages:
+        updated_sorted_list.append(package)
+
+# Update sorted_package_list
+sorted_package_list = updated_sorted_list
 
 print("\nLoading packages onto trucks...")
 # Show the packages loaded onto each truck
@@ -91,11 +102,19 @@ for driver in drivers_list:
         print(f'{i+1}. {package}')
         i += 1
 
-
 print("\nDelivering packages...\n")
 # Deliver packages
 for driver in drivers_list:
     deliver_packages(driver.truck, driver.truck.packageInventory)
+
+count = 0
+print("remaining packages:")
+for package in sorted_package_list:
+    print(package)
+    count += 1
+
+print(f"\n{count} packages remaining.")
+
 
 
 
