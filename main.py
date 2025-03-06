@@ -70,50 +70,75 @@ input_time = datetime.datetime.strptime("10:00 AM", "%I:%M %p")
 for truck in occupied_trucks:
     print(truck)
 
-# Load packages onto trucks using strict round-robin assignment
+print("\nLoading packages onto trucks...")
+
+# Special case packages - these must go on specific trucks
+priority_packages = {
+    1: [13, 14, 15],  # Truck 1 MUST deliver packages 13, 14, 15
+    2: [16, 17],       # Truck 2 MUST deliver packages 16, 17
+}
+
+# Step 1: Manually load priority packages onto assigned trucks
+for truck in occupied_trucks:
+    if truck.truckID in priority_packages:
+        for packageID in priority_packages[truck.truckID]:
+            package = package_table.search(packageID)
+            if package:
+                truck.load_package(package)
+                package.status = "En Route"  # Reflect change in hash table
+                package_table.insert(package.packageID, package)
+
+# Step 2: Load remaining packages based on sorted order (deadline, then distance)
 truck_index = 0  # Start with the first truck
-loaded_packages = set()  # Track loaded package IDs
-updated_sorted_list = []
-
-for package in sorted_package_list[:]:  # Iterate over a copy of the list
-    truck = occupied_trucks[truck_index]  # Select truck based on round-robin index
-    if truck.load_package(package):  # Try to load the package
-        loaded_packages.add(package.packageID)  # Track that this package was loaded
-
-    # Move to the next truck, wrapping around when reaching the end
-    truck_index = (truck_index + 1) % len(occupied_trucks)
-
-  
 
 for package in sorted_package_list:
-    if package.packageID not in loaded_packages:
-        updated_sorted_list.append(package)
+    # Skip if package was already manually assigned
+    if package.packageID in sum(priority_packages.values(), []):
+        continue  
 
-# Update sorted_package_list
-sorted_package_list = updated_sorted_list
+    truck = occupied_trucks[truck_index]  # Get next available truck
 
-print("\nLoading packages onto trucks...")
+    if truck.load_package(package):
+        package.status = "En Route"  # Update status in hash table
+        package_table.insert(package.packageID, package)  
+
+    # Move to the next truck (round-robin balancing)
+    truck_index = (truck_index + 1) % len(occupied_trucks)
+
 # Show the packages loaded onto each truck
 for driver in drivers_list:
     packageCount = len(driver.truck.packageInventory)
     print(f"\nDriver {driver.driverID} is driving Truck {driver.truck.truckID} with the following packages (count = {packageCount}):")
-    i = 0
-    for package in driver.truck.packageInventory:
-        print(f'{i+1}. {package}')
-        i += 1
+    for i, package in enumerate(driver.truck.packageInventory, start=1):
+        print(f'{i}. {package}')
 
+
+
+# Show the status of all packages after loading onto trucks
+print("\nPackage Status after loading onto trucks:\n")
+for packageID in range(1, 41):  # Loop over package IDs 1 to 40
+    package = package_table.search(packageID)  # Search using the correct ID
+    if package:
+        print(f"Status: {package.status}")
+
+    
 print("\nDelivering packages...\n")
 # Deliver packages
 for driver in drivers_list:
     deliver_packages(driver.truck, driver.truck.packageInventory)
 
-count = 0
-print("remaining packages:")
-for package in sorted_package_list:
-    print(package)
-    count += 1
 
-print(f"\n{count} packages remaining.")
+# Show the status of all packages after delivery
+print("\nPackage Status after delivery:\n")
+for packageID in range(1, 41):  # Loop over package IDs 1 to 40
+    package = package_table.search(packageID)  # Search using the correct ID
+    if package:
+        print(f"Status: {package.status}")
+
+
+
+
+
 
 
 
