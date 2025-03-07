@@ -1,99 +1,126 @@
-#handle routing here with Greedy Algorithm
+from datetime import datetime, timedelta, time
+from data_handler import distanceBetween, extract_address
 
-import data_handler
-import datetime
-from hash_table import ChainingHashTable
-
-package_table = ChainingHashTable()
-
-data_handler.loadPackageData('./data/package_file.csv', package_table)
-
-def sortPackages_byDeadline_and_Distance(package_list):
-    """ Sorts a given list of packages by deadline first, then by distance from the hub. """
+def sort_packages_by_deadline_and_distance(package_list):
+    """ Sorts packages by deadline first, then by distance from the hub. """
+    hub_index = extract_address("4001 South 700 East")
     
-    hub_index = data_handler.extract_address('4001 South 700 East')  # Hub location index
+    return sorted(package_list, key=lambda package: (
+        package.get_deadline(),  # Sort by deadline
+        float(distanceBetween(hub_index, extract_address(package.get_address())))  # Then by distance
+    ))
 
-    # Sort by deadline first, then by distance from the hub
-    sorted_list = sorted(
-        package_list, 
-        key=lambda package: (
-            package.get_deadline(),  # Sort by earliest deadline
-            float(data_handler.distanceBetween(hub_index, data_handler.extract_address(package.get_address())))  # Then by closest distance
-        )
-    )
-
-    return sorted_list  # Return sorted package list
-
-
-def deliver_packages(truck, package_list):
-    """Deliver packages while ensuring same-address packages have the same timestamp."""
-    print(f"\n🚛 Truck {truck.truckID} STARTING route at {truck.departTime.strftime('%I:%M %p')} from {truck.currentLocation}.")
-
-    current_time = truck.departTime
-    total_distance = 0
-
-    # Step 1: Group packages by delivery address
-    deliveries_by_address = {}
-    for package in package_list:
-        if package.address not in deliveries_by_address:
-            deliveries_by_address[package.address] = []
-        deliveries_by_address[package.address].append(package)
-
-    # Step 2: Deliver packages based on sorted order
-    visited_addresses = set()
-    for package in package_list:
-        address = package.address
-
-        # Skip if already delivered to this address
-        if address in visited_addresses:
-            continue
-
-        # Calculate travel distance using your existing function
-        hub_index = data_handler.extract_address(truck.currentLocation)
-        package_index = data_handler.extract_address(address)
-        distance_to_next = float(data_handler.distanceBetween(hub_index, package_index))
-
-        # Calculate travel time
-        travel_time = datetime.timedelta(minutes=(distance_to_next / truck.speed) * 60)
-
-        # Update truck's travel state
-        total_distance += distance_to_next
-        current_time += travel_time
-        truck.currentLocation = address
-        visited_addresses.add(address)  # Mark as visited
-
-        # Log travel information
-        print(f"\nTruck {truck.truckID} TRAVELING {distance_to_next:.2f} miles to {address}.")
-        print(f"   - Current Time: {current_time.strftime('%I:%M %p')}")
-        print(f"   - Estimated Travel Time: {travel_time}")
-
-        # Deliver **all packages** at this address at the same timestamp
-        print(f"DELIVERED packages at {address} at {current_time.strftime('%I:%M %p')}:")
-        for package in deliveries_by_address[address]:
-            package.deliveryTime = current_time  # Assign the same timestamp
-            package.status = "Delivered"
-            truck.packageInventory.remove(package)  # ✅ Remove from truck inventory
-            print(f"   - Package {package.packageID}")  # Logs all delivered packages
+def load_truck(truck, packages, package_table, assigned_packages):
+    for package in packages:
+        if package.packageID in assigned_packages:
+            continue  # Skip already assigned packages
+        if truck.load_package(package, package_table):
+            truck.packageInventory.append(package)  # Add package to the truck's inventory
+            assigned_packages.add(package.packageID)  # Track package as assigned
+        if len(truck.packageInventory) == truck.capacity:
+            break  # Stop loading when truck is full
 
 
-    if len(truck.packageInventory) == 0:
-        hub_index = data_handler.extract_address("4001 South 700 East")
-        last_index = data_handler.extract_address(truck.currentLocation)
-        distance_back_to_hub = float(data_handler.distanceBetween(last_index, hub_index))
-        return_time = current_time + datetime.timedelta(minutes=(distance_back_to_hub / truck.speed) * 60)
-        truck.returnTime = return_time
-        truck.atHub = True  # Mark truck as back at the hub
-
-        print(f"\n✅ Truck {truck.truckID} returned to the Hub at {return_time.strftime('%I:%M %p')}. It is now waiting for reassignment.")
 
 
-        # 🚨 Trigger next truck if waiting
-        for waiting_truck in occupied_trucks:
-            if waiting_truck.atHub and len(waiting_truck.packageInventory) > 0:
-                print(f"🚛 Driver reassigned to Truck {waiting_truck.truckID}")
-                waiting_truck.departTime = return_time
-                deliver_packages(waiting_truck, waiting_truck.packageInventory)
-                break
+def deliver_packages(truck, package_table):
+    """
+    Delivers all packages on the truck in order, updating the truck's time.
+    """
+    print(f"\n🚛 Truck {truck.truckID} STARTING route at {truck.current_time.strftime('%I:%M %p')} from {truck.currentLocation}.")
+    packages_delivered = 0
+    while truck.packageInventory:
+        package = truck.packageInventory.pop(0)
+        address_index = extract_address(package.get_address())
+        distance = float(distanceBetween(extract_address(truck.currentLocation), address_index))
+        
+        # Move truck and update time
+        truck.current_time = truck.drive_to(package.get_address(), distance)
+        package.deliveryTime = truck.current_time.strftime('%I:%M %p')  # Set delivery time for report
+        package.status = "Delivered"
+        package_table.insert(package.packageID, package)  # Update package status
+        
+        packages_delivered += 1
+        print(f"   - DELIVERED Package {package.packageID} at {package.get_address()} at {package.deliveryTime}.")
+    
+    truck.return_to_hub()  # Mark truck as back at hub
+    print(f"🚛 Truck {truck.truckID} RETURNED to hub at {truck.returnTime.strftime('%I:%M %p')}.")
+    print(f"📦 {packages_delivered} PACKAGES delivered by Truck {truck.truckID}.")
+
+
+
+def plan_deliveries(trucks, package_table):
+    """
+    Main function to assign packages to trucks and schedule deliveries.
+    """
+    # ✅ Global Set to Track Assigned Packages
+    assigned_packages = set()
+
+    # ✅ Track Delayed Packages (like Package #9)
+    delayed_packages = []
+
+    # STEP 1: Get all packages and sort them
+    all_packages = [package_table.search(i) for i in range(1, 41) if package_table.search(i)]
+    all_packages = sort_packages_by_deadline_and_distance(all_packages)
+
+    # STEP 2: Remove Package #9 & Store in `delayed_packages`
+    for package in all_packages[:]:  # Iterate over a copy to avoid modifying the list while iterating
+        if package.packageID == 9:
+            delayed_packages.append(package)
+            all_packages.remove(package)  # ✅ Remove from normal processing
+
+    # STEP 3: Grouped Packages (Must Be Together)
+    group_A_packages = [package_table.search(i) for i in [20, 13, 15, 19, 14, 16]]
+    truck_1 = trucks[0]  # Truck 1 leaves at 8:00 AM
+
+    load_truck(truck_1, sort_packages_by_deadline_and_distance(group_A_packages), package_table, assigned_packages)
+
+    assigned_packages.update(pkg.packageID for pkg in group_A_packages)  # ✅ Track assigned packages
+
+    # Remove assigned packages before filling Truck 1
+    remaining_packages = [pkg for pkg in all_packages if pkg.packageID not in assigned_packages]
+
+    load_truck(truck_1, remaining_packages, package_table, assigned_packages)
+
+    # STEP 4: Truck 2 (Delayed Departure at 9:05 AM)
+    truck_2 = trucks[1]
+    truck_2.current_time = datetime.combine(datetime.today(), time(9, 5))  # Delay truck 2's departure
+    
+    delayed_packages_truck2 = [package_table.search(i) for i in [6, 25, 28, 32]]
+    delayed_packages_truck2 = sort_packages_by_deadline_and_distance(delayed_packages_truck2)
+
+    load_truck(truck_2, delayed_packages_truck2, package_table, assigned_packages)
+
+    remaining_packages = [pkg for pkg in remaining_packages if pkg.packageID not in assigned_packages]
+    load_truck(truck_2, remaining_packages, package_table, assigned_packages)
+
+    # STEP 5: Truck 3 (Waits for Driver After First Truck Returns)
+    truck_3 = trucks[2]
+
+    print("\n🚛 Truck 3 is waiting at the hub until a driver is available...")
+
+    # STEP 6: Deliver Packages in Order
+    deliver_packages(truck_1, package_table)
+    deliver_packages(truck_2, package_table)
+
+    # ✅ Dynamically Assign Delayed Packages (like Package #9)
+    truck_3.current_time = max(truck_1.returnTime, truck_2.returnTime)
+
+    for package in delayed_packages:
+        if package.packageID == 9:
+            print("\n🚨 AT 10:20 AM: Corrected address for Package 9 received!")
+            package.address = "410 S State St, Salt Lake City, UT 84111"  # ✅ Update address
+
+    # ✅ Reintegrate Delayed Packages Into The System
+    load_truck(truck_3, delayed_packages, package_table, assigned_packages)
+
+    remaining_packages = [pkg for pkg in all_packages if pkg.packageID not in assigned_packages]
+
+    load_truck(truck_3, remaining_packages, package_table, assigned_packages)
+
+    deliver_packages(truck_3, package_table)
+
+    print("\n🎉 ALL PACKAGES DELIVERED! DAY COMPLETE.")
 
 
 
