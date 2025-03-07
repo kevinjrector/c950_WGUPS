@@ -8,73 +8,92 @@ package_table = ChainingHashTable()
 
 data_handler.loadPackageData('./data/package_file.csv', package_table)
 
-def sortPackages_byDeadline_or_byDistance():
+def sortPackages_byDeadline_and_Distance(package_list):
+    """ Sorts a given list of packages by deadline first, then by distance from the hub. """
+    
+    hub_index = data_handler.extract_address('4001 South 700 East')  # Hub location index
 
-    hub_index = data_handler.extract_address('4001 South 700 East')
-    sorted_package_list = []
+    # Sort by deadline first, then by distance from the hub
+    sorted_list = sorted(
+        package_list, 
+        key=lambda package: (
+            package.get_deadline(),  # Sort by earliest deadline
+            float(data_handler.distanceBetween(hub_index, data_handler.extract_address(package.get_address())))  # Then by closest distance
+        )
+    )
 
-    for packageID in range(1, 41):
-        package = package_table.search(packageID)
-        
-        if package:
-            packageAddress_index = data_handler.extract_address(package.get_address())
-            distance = float(data_handler.distanceBetween(hub_index, packageAddress_index))
-            sorted_package_list.append((package, distance))
-
-    sorted_package_list.sort(key=lambda x: (x[0].get_deadline(), x[1]))
-
-    return[package[0] for package in sorted_package_list]
-
+    return sorted_list  # Return sorted package list
 
 
-def deliver_packages(truck, package_table):
-    hub_index = data_handler.extract_address('4001 South 700 East')
-    current_time = truck.departTime  # Start at truck's departure time
-    packages_delivered = 0  # Track delivered package count
+def deliver_packages(truck, package_list):
+    """Deliver packages while ensuring same-address packages have the same timestamp."""
+    print(f"\n🚛 Truck {truck.truckID} STARTING route at {truck.departTime.strftime('%I:%M %p')} from {truck.currentLocation}.")
 
-    while truck.packageInventory:
-        current_location_index = data_handler.extract_address(truck.currentLocation)
-        closest_package = None
-        shortest_distance = float('inf')
+    current_time = truck.departTime
+    total_distance = 0
 
-        # Find the nearest package based on the truck's current location
-        for package in truck.packageInventory:
-            package_address_index = data_handler.extract_address(package.get_address())
-            distance = data_handler.distanceBetween(current_location_index, package_address_index)
+    # Step 1: Group packages by delivery address
+    deliveries_by_address = {}
+    for package in package_list:
+        if package.address not in deliveries_by_address:
+            deliveries_by_address[package.address] = []
+        deliveries_by_address[package.address].append(package)
 
-            if distance < shortest_distance:
-                closest_package = package
-                shortest_distance = distance
+    # Step 2: Deliver packages based on sorted order
+    visited_addresses = set()
+    for package in package_list:
+        address = package.address
 
-        if closest_package:
-            # Calculate travel time based on distance
-            travel_time = datetime.timedelta(hours=shortest_distance / truck.speed)
-            
-            # Update truck time to reflect travel
-            current_time += travel_time  
+        # Skip if already delivered to this address
+        if address in visited_addresses:
+            continue
 
-            # Move truck to package location
-            truck.drive_to(closest_package.get_address(), shortest_distance, travel_time)
+        # Calculate travel distance using your existing function
+        hub_index = data_handler.extract_address(truck.currentLocation)
+        package_index = data_handler.extract_address(address)
+        distance_to_next = float(data_handler.distanceBetween(hub_index, package_index))
 
-            # Mark package as delivered and set delivery time
-            closest_package.status = "Delivered"
-            closest_package.deliveryTime = current_time
-            packages_delivered += 1  # Increment delivery count
+        # Calculate travel time
+        travel_time = datetime.timedelta(minutes=(distance_to_next / truck.speed) * 60)
 
-            # Remove package from truck inventory
-            truck.packageInventory.remove(closest_package)
+        # Update truck's travel state
+        total_distance += distance_to_next
+        current_time += travel_time
+        truck.currentLocation = address
+        visited_addresses.add(address)  # Mark as visited
 
-            print(f"📦 Truck {truck.truckID} delivered package {closest_package.packageID} to {closest_package.address} at {current_time.strftime('%I:%M %p')}.")
+        # Log travel information
+        print(f"\nTruck {truck.truckID} TRAVELING {distance_to_next:.2f} miles to {address}.")
+        print(f"   - Current Time: {current_time.strftime('%I:%M %p')}")
+        print(f"   - Estimated Travel Time: {travel_time}")
 
-    # Calculate return travel time
-    return_to_hub_distance = data_handler.distanceBetween(current_location_index, hub_index)
-    travel_time_to_hub = datetime.timedelta(hours=return_to_hub_distance / truck.speed)
+        # Deliver **all packages** at this address at the same timestamp
+        print(f"DELIVERED packages at {address} at {current_time.strftime('%I:%M %p')}:")
+        for package in deliveries_by_address[address]:
+            package.deliveryTime = current_time  # Assign the same timestamp
+            package.status = "Delivered"
+            truck.packageInventory.remove(package)  # ✅ Remove from truck inventory
+            print(f"   - Package {package.packageID}")  # Logs all delivered packages
 
-    # Truck returns to hub after last delivery
-    truck.drive_to("4001 South 700 East", return_to_hub_distance, travel_time_to_hub)
-    truck.returnTime = current_time + travel_time_to_hub  # Ensure correct return time
 
-    print(f"\n🚛 Truck {truck.truckID} completed deliveries (Delivered = {packages_delivered}) and returned to the Hub at {truck.returnTime.strftime('%I:%M %p')}. Total miles: {truck.milesTotal:.2f} miles.\n")
+    if len(truck.packageInventory) == 0:
+        hub_index = data_handler.extract_address("4001 South 700 East")
+        last_index = data_handler.extract_address(truck.currentLocation)
+        distance_back_to_hub = float(data_handler.distanceBetween(last_index, hub_index))
+        return_time = current_time + datetime.timedelta(minutes=(distance_back_to_hub / truck.speed) * 60)
+        truck.returnTime = return_time
+        truck.atHub = True  # Mark truck as back at the hub
+
+        print(f"\n✅ Truck {truck.truckID} returned to the Hub at {return_time.strftime('%I:%M %p')}. It is now waiting for reassignment.")
+
+
+        # 🚨 Trigger next truck if waiting
+        for waiting_truck in occupied_trucks:
+            if waiting_truck.atHub and len(waiting_truck.packageInventory) > 0:
+                print(f"🚛 Driver reassigned to Truck {waiting_truck.truckID}")
+                waiting_truck.departTime = return_time
+                deliver_packages(waiting_truck, waiting_truck.packageInventory)
+                break
 
 
 

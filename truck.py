@@ -22,6 +22,7 @@ class Truck:
         self.milesTotal += distance
         self.departTime += travel_time
         self.atHub = False
+        self.returnTime = self.departTime + travel_time  # Track return time
 
     def load_package(self, package):
 
