@@ -11,6 +11,7 @@ class Package:
         self.weight = weight
         self.status = status
         self.deliveryTime = deliveryTime
+        self.assignedTruck = None
 
     def __str__(self):
         return "Package ID {}: {}, {}, {}, {} | Deadline: {} | Weight: {} kilos | Status: {} | Delivery Time: {}".format(

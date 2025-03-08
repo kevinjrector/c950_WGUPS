@@ -2,52 +2,8 @@ from datetime import datetime, time
 from data_handler import load_package_data
 from routing import plan_deliveries
 from truck import Truck
-
-def generate_report(set_time, trucks, package_table):
-    """
-    Generates a report showing the status of trucks and packages at a specific time.
-    set_time: datetime object indicating the time at which the report is generated
-    trucks: List of Truck objects
-    package_table: HashTable containing all packages
-    """
-    print(f"\n📅 Report at {set_time.strftime('%I:%M %p')}")
-    
-    # Iterate over each truck to display its progress
-    for truck in trucks:
-        print(f"\n🚛 Truck {truck.truckID} status:")
-        
-        # Show truck departure time
-        print(f"  - Departed from hub at: {truck.departTime.strftime('%I:%M %p')}")
-        
-        # Show truck's location at set_time
-        print(f"  - Current location: {truck.currentLocation}")
-        
-        # Show packages delivered by this truck by set_time
-        delivered_packages = []
-        remaining_packages = []
-        
-        for package in truck.packageInventory:
-            # Check if the package was delivered by the set_time
-            if package.deliveryTime <= set_time.strftime('%I:%M %p'):
-                delivered_packages.append(package)
-            else:
-                remaining_packages.append(package)
-        
-        # Print the delivered packages
-        if delivered_packages:
-            print(f"  - Packages delivered:")
-            for p in delivered_packages:
-                print(f"    - Package {p.packageID}: Delivered at {p.deliveryTime}")
-        
-        # Print the remaining packages
-        if remaining_packages:
-            print(f"  - Packages remaining to be delivered:")
-            for p in remaining_packages:
-                print(f"    - Package {p.packageID}: {p.address}")
-        
-        print(f"  - Total Packages Delivered: {len(delivered_packages)}")
-        print(f"  - Total Packages Remaining: {len(remaining_packages)}")
-
+from report import generate_report
+from user_interface import get_report_time  # Import the user input function
 
 # 🚛 **Step 1: Initialize Data and Constants**
 TRUCK_SPEED = 18  # MPH
@@ -72,8 +28,8 @@ trucks = [
     Truck(
         truckID=i+1,
         speed=TRUCK_SPEED,
-        currentLocation=HUB_LOCATION,  # ✅ Ensure all trucks start at HUB
-        departTime=departure_times[i] if departure_times[i] else datetime.max,  # ✅ Avoid `None` issue
+        currentLocation=HUB_LOCATION,  # Ensure all trucks start at HUB
+        departTime=departure_times[i] if departure_times[i] else datetime.max,  # Avoid `None` issue
         capacity=TRUCK_CAPACITY
     ) for i in range(TOTAL_TRUCKS)
 ]
@@ -81,8 +37,8 @@ trucks = [
 # 🚛 **Step 3: Run the Delivery Plan**
 plan_deliveries(trucks, package_hashTable)
 
-# Set the time for the report
-set_time = datetime.strptime('10:30 AM', '%I:%M %p')
+# 🚛 **Step 4: Get User Input for Report Time**
+set_time = get_report_time()  # Get the time from the user input
 
-# Generate the report at set_time
+# 🚛 **Step 5: Generate the Report**
 generate_report(set_time, trucks, package_hashTable)

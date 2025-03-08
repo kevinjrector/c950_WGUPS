@@ -12,13 +12,21 @@ def sort_packages_by_deadline_and_distance(package_list):
 
 def load_truck(truck, packages, package_table, assigned_packages):
     for package in packages:
+        # Check if the package is already assigned
         if package.packageID in assigned_packages:
             continue  # Skip already assigned packages
+
+        # Load package and track it
         if truck.load_package(package, package_table):
-            truck.packageInventory.append(package)  # Add package to the truck's inventory
             assigned_packages.add(package.packageID)  # Track package as assigned
+            package.assignedTruck = truck.truckID  # Assign truck to package
+            package.status = "En Route"
+
+        # Stop loading when truck reaches its capacity
         if len(truck.packageInventory) == truck.capacity:
-            break  # Stop loading when truck is full
+            #print(f"Truck {truck.truckID} is full. Stopping load.")  # Debug line
+            break
+
 
 
 
@@ -29,6 +37,7 @@ def deliver_packages(truck, package_table):
     """
     print(f"\n🚛 Truck {truck.truckID} STARTING route at {truck.current_time.strftime('%I:%M %p')} from {truck.currentLocation}.")
     packages_delivered = 0
+
     while truck.packageInventory:
         package = truck.packageInventory.pop(0)
         address_index = extract_address(package.get_address())
@@ -41,6 +50,7 @@ def deliver_packages(truck, package_table):
         package_table.insert(package.packageID, package)  # Update package status
         
         packages_delivered += 1
+        
         print(f"   - DELIVERED Package {package.packageID} at {package.get_address()} at {package.deliveryTime}.")
     
     truck.return_to_hub()  # Mark truck as back at hub
@@ -71,6 +81,7 @@ def plan_deliveries(trucks, package_table):
 
     # STEP 3: Grouped Packages (Must Be Together)
     group_A_packages = [package_table.search(i) for i in [20, 13, 15, 19, 14, 16]]
+
     truck_1 = trucks[0]  # Truck 1 leaves at 8:00 AM
 
     load_truck(truck_1, sort_packages_by_deadline_and_distance(group_A_packages), package_table, assigned_packages)
@@ -97,7 +108,7 @@ def plan_deliveries(trucks, package_table):
     # STEP 5: Truck 3 (Waits for Driver After First Truck Returns)
     truck_3 = trucks[2]
 
-    print("\n🚛 Truck 3 is waiting at the hub until a driver is available...")
+    #print("\n🚛 Truck 3 is waiting at the hub until a driver is available...")
 
     # STEP 6: Deliver Packages in Order
     deliver_packages(truck_1, package_table)
@@ -108,7 +119,7 @@ def plan_deliveries(trucks, package_table):
 
     for package in delayed_packages:
         if package.packageID == 9:
-            print("\n🚨 AT 10:20 AM: Corrected address for Package 9 received!")
+            #print("\n🚨 AT 10:20 AM: Corrected address for Package 9 received!")
             package.address = "410 S State St, Salt Lake City, UT 84111"  # ✅ Update address
 
     # ✅ Reintegrate Delayed Packages Into The System
@@ -119,6 +130,7 @@ def plan_deliveries(trucks, package_table):
     load_truck(truck_3, remaining_packages, package_table, assigned_packages)
 
     deliver_packages(truck_3, package_table)
+
 
     print("\n🎉 ALL PACKAGES DELIVERED! DAY COMPLETE.")
 
