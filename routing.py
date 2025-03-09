@@ -199,10 +199,16 @@ def plan_deliveries(trucks, package_table):
     deliver_packages(truck_1, package_table)
     deliver_packages(truck_2, package_table)
 
-    # ✅ Truck 3 waits for the first available driver
-    truck_3.current_time = max(truck_1.returnTime, truck_2.returnTime)
-    truck_3.departTime = truck_3.current_time
+    # Find the earliest available driver return time
+    earliest_driver_available = min(truck_1.returnTime, truck_2.returnTime)
 
+    # Convert 12:00 PM into a datetime object with the same date as earliest_driver_available
+    noon_time = datetime.combine(earliest_driver_available.date(), datetime.strptime("12:00 PM", "%I:%M %p").time())
+
+    # Ensure Truck 3 departs at 12:00 PM **at the earliest**
+    truck_3.departTime = max(earliest_driver_available, noon_time)
+
+    truck_3.current_time = truck_3.departTime
 
     for package in delayed_packages:
         if package.packageID == 9:

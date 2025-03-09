@@ -16,67 +16,67 @@ def generate_report(set_time, trucks, package_table):
     for truck in trucks:
         print(f"\n🚛 Truck {truck.truckID} status at {set_time.strftime('%I:%M %p')}:")
 
-        
         # Check if the truck has completed deliveries or still in transit or returned to the hub
         if truck.departTime.time() > set_time.time():
             print(f"  - Truck {truck.truckID} has not left the hub yet.")
         elif truck.returnTime.time() <= set_time.time():
-            print(f"  - Truck {truck.truckID} has returned to the hub.")
+            print(f"  - Truck {truck.truckID} returned to the hub at {truck.returnTime.strftime('%I:%M %p')}.")
         else:
             print(f"  - Truck {truck.truckID} is currently en route.")
 
-
-        # Packages that are delivered or still in progress
-        delivered_packages = []
-        remaining_packages = []
-        erroneous_packages = []
-
-        # Check the status of each package
+        # Check the status of each package **(UPDATING STATUS INSTEAD OF TRACKING IN LISTS)**
         for package_id in range(1, 41):
             package = package_table.search(package_id)
 
             if package.assignedTruck == truck.truckID:
-                # Package is delivered and delivered time is before or at the report time
-                if package.status == 'Delivered' and datetime.strptime(package.deliveryTime, '%I:%M %p') <= set_time:
-                    delivered_packages.append(package)
+                # ✅ Directly update the status
+                if package.deliveryTime and datetime.strptime(package.deliveryTime, '%I:%M %p') <= set_time:
+                    package.status = "Delivered"
                 elif package.updateTime and package.oldAddress:
                     if package.updateTime.time() > set_time.time():
-                        # Package has an error (e.g., delayed package #9)
-                        erroneous_packages.append(f"Package {package.packageID}: {package.oldAddress} (Delayed)")
-                    elif package.updateTime.time() <= set_time.time() and truck.departTime <= set_time < truck.returnTime:
-                        # Package was updated and is in transit
-                        remaining_packages.append(f"Package {package.packageID}: {package.address} (En Route)")
+                        package.status = "Erroneous"
+                    elif package.updateTime.time() <= set_time.time() and truck.departTime <= set_time < truck.returnTime.time():
+                        package.status = "En Route"
                     elif package.updateTime.time() <= set_time.time() and truck.departTime > set_time:
-                        # Package was updated and is still at the hub
-                        remaining_packages.append(f"Package {package.packageID}: {package.address} (At Hub)")
+                        package.status = "At Hub"
                 elif not package.updateTime:
-                    # Package hasn't been delivered, check if it's in transit or at the hub
-                    if truck.departTime <= set_time < truck.returnTime:
-                        remaining_packages.append(f"Package {package.packageID}: {package.address} (En Route)")
-                    elif truck.departTime > set_time:
-                        remaining_packages.append(f"Package {package.packageID}: {package.address} (At Hub)")
+                    if truck.departTime.time() <= set_time.time() < truck.returnTime.time():
+                        package.status = "En Route"
+                    elif truck.departTime.time() > set_time.time():
+                        package.status = "At Hub"
 
-        # Print the delivered packages
-        if delivered_packages:
-            print(f"  - Packages delivered by Truck {truck.truckID}:")
-            for p in delivered_packages:
-                print(f"    - Package {p.packageID}: {p.get_address()} at {p.deliveryTime}")
-        
-        # Print the remaining packages
-        if remaining_packages:
-            print(f"  - Packages remaining to be delivered:")
-            for p in remaining_packages:
-                print(f"    - {p}")
+        # 🚚 **Print packages grouped by status**
+        print(f"\n  - [X] Packages Delivered:")
+        for package_id in range(1, 41):
+            package = package_table.search(package_id)
+            if package.assignedTruck == truck.truckID and package.status == "Delivered":
+                print(f"    - Package {package.packageID}: {package.get_address()} | Delivered at {package.deliveryTime}")
 
-        # Print any erroneous packages
-        if erroneous_packages:
-            print(f"  - Erroneous packages:")
-            for p in erroneous_packages:
-                print(f"    - {p}")
+        print(f"\n  - (~) Packages Remaining:")
+        for package_id in range(1, 41):
+            package = package_table.search(package_id)
+            if package.assignedTruck == truck.truckID and package.status == "En Route":
+                print(f"    - Package {package.packageID}: {package.address} ({package.status})")
+            elif package.assignedTruck == truck.truckID and package.status == "At Hub":
+                print(f"    - Package {package.packageID}: {package.address} ({package.status})")
 
-        print(f"  - Total Packages Delivered: {len(delivered_packages)}")
-        print(f"  - Total Packages Remaining: {len(remaining_packages)}")
-        print(f"  - Total Erroneous Packages: {len(erroneous_packages)}")
+        print(f"\n  - (!) Erroneous Packages:")
+        for package_id in range(1, 41):
+            package = package_table.search(package_id)
+            if package.assignedTruck == truck.truckID and package.status == "Erroneous":
+                if package.updateTime.time() > set_time.time():
+                    print(f"    - Package {package.packageID}: {package.oldAddress} (Will be updated at {package.updateTime.strftime('%I:%M %p')})")
+                else:
+                    print(f"    - Package {package.packageID}: {package.address} (Updated at {package.updateTime.strftime('%I:%M %p')})")
+
+        # 🚛 **Print Totals**
+        delivered_count = sum(1 for package_id in range(1, 41) if package_table.search(package_id).assignedTruck == truck.truckID and package_table.search(package_id).status == "Delivered")
+        remaining_count = sum(1 for package_id in range(1, 41) if package_table.search(package_id).assignedTruck == truck.truckID and package_table.search(package_id).status in ["En Route", "At Hub"])
+        erroneous_count = sum(1 for package_id in range(1, 41) if package_table.search(package_id).assignedTruck == truck.truckID and package_table.search(package_id).status == "Erroneous")
+
+        print(f"\n  - Total Packages Delivered: {delivered_count}")
+        print(f"  - Total Packages Remaining: {remaining_count}")
+        print(f"  - Total Erroneous Packages: {erroneous_count}")
 
 
 def generate_packageStatus(set_time, trucks, package_table, package_id):
@@ -92,19 +92,33 @@ def generate_packageStatus(set_time, trucks, package_table, package_id):
 
     package = package_table.search(package_id)
 
-    if not package:
-        print(f"❌ Package {package_id} not found.")
-        return
+    for t in trucks:
+        if package.assignedTruck == t.truckID:
+            truck = t
+            break
+        else:
+            truck = None
 
-    # Find the truck assigned to this package
-    truck = next((t for t in trucks if t.truckID == package.assignedTruck), None)
 
-
-
-    # 🚚 **Final Output**
-    print(f"  - Package {package.packageID}: {package.get_address()} | Status: {package.status}")
+# ✅ Directly update the status
+    if package.deliveryTime and datetime.strptime(package.deliveryTime, '%I:%M %p') <= set_time:
+        package.status = "Delivered"
+    elif package.updateTime and package.oldAddress:
+        if package.updateTime.time() > set_time.time():
+            package.status = "Erroneous"
+        elif package.updateTime.time() <= set_time.time() and truck.departTime <= set_time < truck.returnTime.time():
+            package.status = "En Route"
+        elif package.updateTime.time() <= set_time.time() and truck.departTime > set_time:
+            package.status = "At Hub"
+    elif not package.updateTime:
+        if truck.departTime.time() <= set_time.time() < truck.returnTime.time():
+            package.status = "En Route"
+        elif truck.departTime.time() > set_time.time():
+            package.status = "At Hub"
 
     print("\n")
+
+    print(f"📦 Package {package_id} Status: {package.status}")
 
 
 
