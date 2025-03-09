@@ -13,7 +13,7 @@ class Package:
         self.deliveryTime = deliveryTime
         self.assignedTruck = None
         self.updateTime = None
-        self.hasError = False
+        self.oldAddress = None
 
     def __str__(self):
         return "Package ID {}: {}, {}, {}, {} | Deadline: {} | Weight: {} kilos | Status: {} | Delivery Time: {}".format(

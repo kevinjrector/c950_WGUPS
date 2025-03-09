@@ -2,8 +2,7 @@ from datetime import datetime, time
 from data_handler import load_package_data
 from routing import plan_deliveries
 from truck import Truck
-from report import generate_report
-from user_interface import get_report_time  # Import the user input function
+import user_interface
 
 # 🚛 **Step 1: Initialize Data and Constants**
 TRUCK_SPEED = 18  # MPH
@@ -45,9 +44,7 @@ for truck in trucks:
     print(f"Truck {truck.truckID} Returned at {truckReturnTime}")
 
 
-# 🚛 **Step 4: Get User Input for Report Time**
-set_time = get_report_time()  # Get the time from the user input
+# 🚛 **Step 4: User Interface*
+user_interface.userInterface(trucks, package_hashTable)  # Run the user interface
 
 
-# 🚛 **Step 5: Generate the Report**
-generate_report(set_time, trucks, package_hashTable)

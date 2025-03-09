@@ -151,7 +151,7 @@ def plan_deliveries(trucks, package_table):
     for package in all_packages[:]:  # Iterate over a copy to avoid modifying the list while iterating
         if package.packageID == 9:
             delayed_packages.append(package)
-            all_packages.remove(package)  # ✅ Remove from normal processing
+            all_packages.remove(package)
 
     # STEP 3: Grouped Packages (Must Be Together)
     group_A_packages = [package_table.search(i) for i in [20, 13, 15, 19, 14, 16]]
@@ -206,6 +206,8 @@ def plan_deliveries(trucks, package_table):
 
     for package in delayed_packages:
         if package.packageID == 9:
+            package.oldAddress = package.address # Store original address
+
             #print("\n🚨 AT 10:20 AM: Corrected address for Package 9 received!")
             package.address = "410 S State St"  # ✅ Update address
             package.updateTime = datetime.strptime("10:20 AM", "%I:%M %p") 
