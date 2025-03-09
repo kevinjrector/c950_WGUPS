@@ -17,16 +17,17 @@ class Truck:
         return f"🚛 Truck {self.truckID} | Speed: {self.speed} mph | Miles: {self.milesTotal} | Location: {self.currentLocation} | Depart Time: {self.departTime.strftime('%I:%M %p')} | Return Time: {self.returnTime.strftime('%I:%M %p') if self.returnTime else 'N/A'} | Packages: {len(self.packageInventory)}/{self.capacity}"
 
     def drive_to(self, new_location, distance):
-        """
-        Moves the truck to a new location, updating its time and total miles.
-        """
-        travel_time = timedelta(minutes=(distance / self.speed) * 60)  # Convert travel time to minutes
+        starting_location = self.currentLocation
+        travel_time = timedelta(minutes=(distance / self.speed) * 60)  # Convert hours to minutes
+        self.current_time += travel_time
         self.currentLocation = new_location
-        self.milesTotal += distance
-        self.current_time += travel_time  # Update current time
-        self.atHub = False  # The truck is no longer at the hub
 
-        return self.current_time  # Return updated time for tracking
+        #print(f"Time: {self.current_time.strftime('%I:%M %p')} 🚛 Truck {self.truckID} driving from {starting_location} to {new_location}")
+        #print(f"   Distance: {distance} miles | Speed: {self.speed} mph with Expected travel time: {distance / self.speed:.2f} hours ({(distance / self.speed) * 60:.2f} minutes)")
+
+        
+        return self.current_time
+
 
     def load_package(self, package, package_table):
         """

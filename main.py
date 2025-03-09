@@ -37,8 +37,17 @@ trucks = [
 # 🚛 **Step 3: Run the Delivery Plan**
 plan_deliveries(trucks, package_hashTable)
 
+for truck in trucks:
+    truckDepartime = truck.departTime.strftime('%I:%M %p')
+    print(f"Truck {truck.truckID} Departed at {truckDepartime}")
+
+    truckReturnTime = truck.returnTime.strftime('%I:%M %p') if truck.returnTime else "N/A"
+    print(f"Truck {truck.truckID} Returned at {truckReturnTime}")
+
+
 # 🚛 **Step 4: Get User Input for Report Time**
 set_time = get_report_time()  # Get the time from the user input
+
 
 # 🚛 **Step 5: Generate the Report**
 generate_report(set_time, trucks, package_hashTable)
