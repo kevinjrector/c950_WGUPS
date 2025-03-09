@@ -1,5 +1,33 @@
 from datetime import datetime
 
+def miles_traveled(set_time, truck, delivered_count):
+    """
+    Calculate the total miles traveled by a truck at a specific time.
+    set_time: datetime object (already converted before passing)
+    truck: Truck object
+    """
+    # If the truck hasn't left yet, return 0 miles
+    if truck.departTime.time() > set_time.time():
+        return 0
+
+    # If the truck has returned before set_time, return full miles traveled
+    if truck.returnTime and truck.returnTime.time() <= set_time.time():
+        return truck.milesTotal
+
+    # Find the number of packages delivered up to `set_time`
+    delivered_count = delivered_count
+
+    # If no packages were delivered yet, return 0 miles
+    if delivered_count == 0:
+        return 0
+
+    # Use the delivery count as an index (avoid out-of-range errors)
+    return truck.milesTotal_list[min(delivered_count - 1, len(truck.milesTotal_list) - 1)]
+
+
+
+
+
 def generate_report(set_time, trucks, package_table):
     """
     Generates a report showing the status of trucks and packages at a specific time.
@@ -73,10 +101,14 @@ def generate_report(set_time, trucks, package_table):
         delivered_count = sum(1 for package_id in range(1, 41) if package_table.search(package_id).assignedTruck == truck.truckID and package_table.search(package_id).status == "Delivered")
         remaining_count = sum(1 for package_id in range(1, 41) if package_table.search(package_id).assignedTruck == truck.truckID and package_table.search(package_id).status in ["En Route", "At Hub"])
         erroneous_count = sum(1 for package_id in range(1, 41) if package_table.search(package_id).assignedTruck == truck.truckID and package_table.search(package_id).status == "Erroneous")
+        miles_at_time = miles_traveled(set_time, truck, delivered_count)
+
 
         print(f"\n  - Total Packages Delivered: {delivered_count}")
         print(f"  - Total Packages Remaining: {remaining_count}")
         print(f"  - Total Erroneous Packages: {erroneous_count}")
+        print(f"  - Total Miles Traveled at {set_time.strftime('%I:%M %p')}: {miles_at_time:.2f} miles")
+
 
 
 def generate_packageStatus(set_time, trucks, package_table, package_id):
@@ -118,7 +150,10 @@ def generate_packageStatus(set_time, trucks, package_table, package_id):
 
     print("\n")
 
-    print(f"📦 Package {package_id} Status: {package.status}")
+    if package.status == "Erroneous":
+        print(f"📦 Package {package_id} Status: {package.status} (Will be updated at {package.updateTime.strftime('%I:%M %p')})")
+    else:
+        print(f"📦 Package {package_id} Status: {package.status}")
 
 
 

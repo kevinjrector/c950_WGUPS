@@ -9,6 +9,7 @@ class Truck:
         self.capacity = capacity  # Max capacity (16 packages)
         self.packageInventory = []  # Packages loaded onto the truck
         self.milesTotal = 0  # Total miles traveled
+        self.milesTotal_list = []  # List of miles traveled
         self.returnTime = None  # Time the truck returns to hub
         self.current_time = departTime  # Tracks when deliveries occur
         self.atHub = True  # True if truck is at the hub
@@ -21,10 +22,12 @@ class Truck:
         travel_time = timedelta(minutes=(distance / self.speed) * 60)  # Convert hours to minutes
         self.current_time += travel_time
         self.currentLocation = new_location
+        self.milesTotal += distance
+        self.milesTotal_list.append(self.milesTotal)
 
-        #print(f"Time: {self.current_time.strftime('%I:%M %p')} 🚛 Truck {self.truckID} driving from {starting_location} to {new_location}")
+        print(f"Time: {self.current_time.strftime('%I:%M %p')} 🚛 Truck {self.truckID} driving from {starting_location} to {new_location}")
         #print(f"   Distance: {distance} miles | Speed: {self.speed} mph with Expected travel time: {distance / self.speed:.2f} hours ({(distance / self.speed) * 60:.2f} minutes)")
-
+        print(f" Distance: {distance}")
         
         return self.current_time
 

@@ -49,7 +49,7 @@ def load_address_data(file):
 
 
 def load_distance_data(file):
-    """Loads distance data from the CSV file into a 2D list and mirrors missing values."""
+    """Loads distance data into a 2D list and ensures missing values are filled symmetrically."""
     distance_matrix = []
 
     with open(file, newline='', encoding='utf-8') as csvfile:
@@ -57,13 +57,17 @@ def load_distance_data(file):
         for row in csv_reader:
             distance_matrix.append([float(cell) if cell else None for cell in row])  # Convert to floats, handle empty values
 
-    # Mirror missing values (if row[i][j] is missing, use row[j][i])
+    # Fill missing values by mirroring (A → B should match B → A)
     for i in range(len(distance_matrix)):
         for j in range(len(distance_matrix[i])):
             if distance_matrix[i][j] is None and distance_matrix[j][i] is not None:
                 distance_matrix[i][j] = distance_matrix[j][i]  # Mirror the value
+            elif distance_matrix[i][j] is None and distance_matrix[j][i] is None:
+                distance_matrix[i][j] = float('inf')  # Assign large value if both are missing
 
     return distance_matrix
+
+
 
 
 def extract_address(address, address_dict):

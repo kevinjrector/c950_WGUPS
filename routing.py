@@ -9,50 +9,85 @@ address_dict = load_address_data(ADDRESS_FILE)
 distance_matrix = load_distance_data(DISTANCE_FILE)
 
 def sortPackages_forLoading(package_list):
-    """ Sorts packages by deadline only before loading onto trucks. """
-    return sorted(package_list, key=lambda package: package.get_deadline() or time(23, 59))
+    """ Sorts packages by distance first, then by deadline to optimize delivery order. """
+
+    hub_index = extract_address("4001 South 700 East", address_dict)
+
+    # 1️⃣ Calculate Distance of Each Package from Its Next Closest Stop
+    package_distances = []
+    for package in package_list:
+        package_index = extract_address(package.get_address(), address_dict)
+        if package_index is not None:
+            # Get distance from hub initially
+            distance = distanceBetween(hub_index, package_index, distance_matrix)
+            package_distances.append((distance, package))
+
+    # 2️⃣ Sort Packages by Distance First
+    package_distances.sort(key=lambda x: x[0])  # Sort by distance value
+
+    # 3️⃣ Sort by Deadline AFTER Sorting by Distance
+    sorted_packages = sorted(package_distances, key=lambda x: x[1].get_deadline())
+
+    # ✅ Extract only the package objects from the sorted list
+    return [package[1] for package in sorted_packages]
+
+
+
+
+
 
 def sortPackages_forDelivery(truck, package_list):
-    """ Sorts packages dynamically by deadline first, then by distance from the truck’s current location.
-        Ensures packages going to the same address are grouped together and sorted based on the earliest deadline. """
-    
+    """
+    Implements a nearest-neighbor greedy approach.
+    - Truck always goes to the **next closest stop**.
+    - Grouped packages are delivered together.
+    - Deadline is only considered if distances are equal.
+    """
+
     sorted_packages = []
-    current_location = truck.currentLocation  
+    current_location = truck.currentLocation
+    remaining_packages = package_list[:]  # Copy list so we can modify it
 
-    # 🚀 Step 1: Group Packages by Address
-    address_groups = {}
-    for package in package_list:
-        address = package.get_address()
-        if address not in address_groups:
-            address_groups[address] = []
-        address_groups[address].append(package)
+    while remaining_packages:
+        nearest_package = None
+        nearest_distance = float('inf')
 
-    # 🚀 Step 2: Build a Priority Queue Based on Earliest Deadline in Each Group
-    package_heap = []
-    for address in address_groups:
-        packages = address_groups[address]
-        package_index = extract_address(address, address_dict)
-        current_index = extract_address(current_location, address_dict)
+        # Step 1: Find the nearest package
+        for package in remaining_packages:
+            package_index = extract_address(package.get_address(), address_dict)
+            current_index = extract_address(current_location, address_dict)
 
-        if package_index is None or current_index is None:
-            continue  # Skip invalid addresses
+            if package_index is None or current_index is None:
+                continue  # Skip invalid addresses
 
-        # Get the **earliest deadline** among all packages at this address
-        earliest_deadline = min(pkg.get_deadline() for pkg in packages)
+            distance = distanceBetween(current_index, package_index, distance_matrix)
 
-        # Get distance to this address from current location
-        distance = distanceBetween(current_index, package_index, distance_matrix) or float('inf')
+            # Select package with **shortest distance**
+            if distance < nearest_distance:
+                nearest_distance = distance
+                nearest_package = package
 
-        # ✅ Push to heap using earliest deadline, then distance
-        heapq.heappush(package_heap, (earliest_deadline, distance, address))
+            # If two packages have the same distance, use **earliest deadline**
+            elif distance == nearest_distance:
+                if package.get_deadline() < nearest_package.get_deadline():
+                    nearest_package = package
 
-    # 🚀 Step 3: Extract the Best Delivery Order
-    while package_heap:
-        _, _, address = heapq.heappop(package_heap)  # Extract the next best stop
-        sorted_packages.extend(address_groups[address])  # Add all packages at this address together
-        current_location = address  # Move truck to this address
+        # Step 2: Deliver all grouped packages at the same location
+        if nearest_package:
+            same_location_packages = [
+                pkg for pkg in remaining_packages if pkg.get_address() == nearest_package.get_address()
+            ]
+
+            sorted_packages.extend(same_location_packages)
+            current_location = nearest_package.get_address()  # Move truck
+
+            # Remove delivered packages
+            for pkg in same_location_packages:
+                remaining_packages.remove(pkg)
 
     return sorted_packages
+
+
 
 
 
@@ -81,17 +116,17 @@ def deliver_packages(truck, package_table):
 
     packages_delivered = 0
 
-    # 🚀 Sort packages dynamically before delivering
+    # Sort packages dynamically before delivering
     truck.packageInventory = sortPackages_forDelivery(truck, truck.packageInventory)
 
     while truck.packageInventory:
-        # 🚚 Get the next package's address
+        # Get the next package's address
         address = truck.packageInventory[0].get_address()
         package_index = extract_address(address, address_dict)
         start_index = extract_address(truck.currentLocation, address_dict)
         distance = float(distanceBetween(start_index, package_index, distance_matrix))
 
-        # 🚛 Drive to the new address
+        # Drive to the new address
         truck.current_time = truck.drive_to(address, distance)
 
         # 🚚 Deliver all packages at this address
@@ -189,6 +224,11 @@ def plan_deliveries(trucks, package_table):
 
     remaining_packages = [pkg for pkg in remaining_packages if pkg.packageID not in assigned_packages]
     load_truck(truck_2, remaining_packages, package_table, assigned_packages)
+
+            #Show truck 1 final inventory before starting the route
+    print('Truck 2 Inventory (FINAL)')
+    for pkg in truck_2.packageInventory:
+        print(f'Package {pkg.packageID} - Address: {pkg.address} - Deadline: {pkg.get_deadline()} - Distance: {distanceBetween(extract_address("4001 South 700 East", address_dict), extract_address(pkg.get_address(), address_dict), distance_matrix)}')
 
     # STEP 5: Truck 3 (Waits for Driver After First Truck Returns)
     truck_3 = trucks[2]
