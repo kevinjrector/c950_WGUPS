@@ -136,6 +136,10 @@ def load_truck(truck, packages, package_table, assigned_packages):
 def total_miles_traveled(truck):
     """
     Calculates the total miles traveled at the end of the day
+
+    truck: Truck object to calculate total miles for
+
+    returns the total miles traveled by the truck
     """
     stops_count = len(truck.truck.packageInventory) 
 
@@ -288,7 +292,8 @@ def plan_deliveries(trucks, package_table):
     truck_3.departTime = max(earliest_driver_available, noon_time)
     truck_3.current_time = truck_3.departTime
 
-    # Update the delayed packages with corrected addresses
+    # Package 9 was initially assigned an incorrect address and must be corrected at 10:20 AM.
+    # This update ensures the correct address is used when it's scheduled for delivery.
     for package in delayed_packages:
         if package.packageID == 9:
             package.oldAddress = package.address # Store original address

@@ -70,3 +70,7 @@ class Truck:
         """
         self.atHub = True
         self.returnTime = self.current_time 
+        self.atHub = True
+        self.returnTime = self.current_time
+        self.currentLocation = "4001 South 700 East"  # Explicitly set hub location
+        self.packageInventory.clear()  # Ensure packages are removed from the truck
