@@ -54,16 +54,20 @@ def generate_report(set_time, trucks, package_table):
     
     print(f"\n📅 Report at {set_time.strftime('%I:%M %p')}")
 
+    totalMiles_allTrucks = 0
+
     for truck in trucks:
-        print(f"\n🚛 Truck {truck.truckID} status at {set_time.strftime('%I:%M %p')}:")
+        print(f"\nTruck {truck.truckID} status at {set_time.strftime('%I:%M %p')}:")
 
         # Check if the truck has completed deliveries or still in transit or returned to the hub
         if truck.departTime.time() > set_time.time():
-            print(f"  - Truck {truck.truckID} has not left the hub yet.")
+            print(f"    - Truck {truck.truckID} has not left the hub yet.")
         elif truck.returnTime.time() <= set_time.time():
-            print(f"  - Truck {truck.truckID} returned to the hub at {truck.returnTime.strftime('%I:%M %p')}.")
+            print(f"    - Truck {truck.truckID} returned to the hub at {truck.returnTime.strftime('%I:%M %p')}.")
         else:
-            print(f"  - Truck {truck.truckID} is currently en route.")
+            print(f"    - Truck {truck.truckID} is currently en route.")
+
+        print(f"\nPackage Inventory Status for Truck {truck.truckID}:")
 
         # Update package statuses based on the current time and truck depart/return times
         for package_id in range(1, 41):
@@ -114,12 +118,15 @@ def generate_report(set_time, trucks, package_table):
         remaining_count = sum(1 for package_id in range(1, 41) if package_table.search(package_id).assignedTruck == truck.truckID and package_table.search(package_id).status in ["En Route", "At Hub"])
         erroneous_count = sum(1 for package_id in range(1, 41) if package_table.search(package_id).assignedTruck == truck.truckID and package_table.search(package_id).status == "Erroneous")
         miles_at_time = miles_traveled(set_time, truck, delivered_count)
+        totalMiles_allTrucks += miles_traveled(set_time, truck, delivered_count)
 
 
         print(f"\n  - Total Packages Delivered: {delivered_count}")
         print(f"  - Total Packages Remaining: {remaining_count}")
         print(f"  - Total Erroneous Packages: {erroneous_count}")
         print(f"  - Total Miles Traveled at {set_time.strftime('%I:%M %p')}: {miles_at_time:.2f} miles")
+
+    print(f"\n==Total Miles for all Trucks: {totalMiles_allTrucks:.2f} miles as of {set_time.strftime('%I:%M %p')}==")
 
 
 

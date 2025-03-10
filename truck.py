@@ -36,7 +36,6 @@ class Truck:
         self.milesTotal += distance
         self.milesTotal_list.append(self.milesTotal)
 
-        print(f"Time: {self.current_time.strftime('%I:%M %p')} 🚛 Truck {self.truckID} driving from {starting_location} to {new_location}")
         #print(f"   Distance: {distance} miles | Speed: {self.speed} mph with Expected travel time: {distance / self.speed:.2f} hours ({(distance / self.speed) * 60:.2f} minutes)")
         print(f" Distance: {distance}")
         

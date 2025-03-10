@@ -20,6 +20,8 @@ def sortPackages_forLoading(package_list):
     This method uses a greedy approach to optimize the loading order.
 
     package_list: List of Package objects to be sorted
+
+    Returns the sorted list of packages for loading.
     """
 
     # Sets the hub location
@@ -55,6 +57,8 @@ def sortPackages_forDelivery(truck, package_list):
 
     truck: Truck object that will deliver the packages
     package_list: List of Package objects to be sorted
+
+    Returns the sorted list of packages for delivery.
     """
 
     sorted_packages = []
@@ -102,11 +106,6 @@ def sortPackages_forDelivery(truck, package_list):
     return sorted_packages
 
 
-
-
-
-
-
 def load_truck(truck, packages, package_table, assigned_packages):
     """
     Loads packages onto a truck until it reaches capacity or runs out of packages.
@@ -133,6 +132,14 @@ def load_truck(truck, packages, package_table, assigned_packages):
         # Stop loading when truck reaches its capacity
         if len(truck.packageInventory) == truck.capacity:
             break
+
+def total_miles_traveled(truck):
+    """
+    Calculates the total miles traveled at the end of the day
+    """
+    stops_count = len(truck.truck.packageInventory) 
+
+    return truck.milesTotal_list[stops_count - 1] if stops_count > 0 else 0
 
 
 
@@ -187,10 +194,17 @@ def deliver_packages(truck, package_table):
         packages_delivered += len(delivered_packages)
 
     # Return to hub
+    hub_index = extract_address("4001 South 700 East", address_dict)
+    start_index = extract_address(truck.currentLocation, address_dict)
+    distance = float(distanceBetween(start_index, hub_index, distance_matrix))
+
+    truck.current_time = truck.drive_to(hub_index, distance)
     truck.return_to_hub()
-    print(f"\n🚛 Truck {truck.truckID} RETURNED to hub at {truck.returnTime.strftime('%I:%M %p')}.")
-    print(f"📦 {packages_delivered} PACKAGES delivered by Truck {truck.truckID}.")
-    print("++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+
+    print(f"\nTruck {truck.truckID} RETURNED to hub at {truck.returnTime.strftime('%I:%M %p')}.")
+    print(f"{packages_delivered} PACKAGES delivered by Truck {truck.truckID}.")
+    print("============================ END OF ROUTE ============================\n")
 
 
 
@@ -292,6 +306,12 @@ def plan_deliveries(trucks, package_table):
 
     # Deliver packages for Truck 3
     deliver_packages(truck_3, package_table)
+
+    sum_miles = 0
+    # Total miles traveled for all trucks
+    for truck in trucks:
+        sum_miles += truck.milesTotal if truck.milesTotal > 0 else 0
+    print(f"TOTAL MILES TRAVELED FOR ALL TRUCKS = {sum_miles:.2f} miles")
 
     print("\n🎉 ALL PACKAGES DELIVERED! DAY COMPLETE.")
 

@@ -28,7 +28,8 @@ def userInterface(trucks, package_hashTable):
     Main user interface function that allows the user to generate reports or view package status.
     """
     while True:
-        print("WGUPS Delivery System")
+        print("=====================================")
+        print("\nWGUPS Delivery System - Main Menu")
         print("1. Generate a Complete Delivery Report")
         print("2. View a Package's Status")
         print("3. Exit")
@@ -38,7 +39,7 @@ def userInterface(trucks, package_hashTable):
         if choice == '1':
             set_time = get_report_time()
             report.generate_report(set_time, trucks, package_hashTable)
-            print("Report generated successfully!")
+            print("Report generated successfully!\n")
 
             print("Return to the main menu? (y/n)")
             return_menu = input()
