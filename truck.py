@@ -1,23 +1,34 @@
-from datetime import datetime, timedelta
+"""
+This module contains the Truck class which is used to create truck objects.
+A truck object contains important attributes such as the truck ID, speed, current location, and more.
+"""
+from datetime import timedelta
 
 class Truck:
     def __init__(self, truckID, speed, currentLocation, departTime, capacity):
         self.truckID = truckID
-        self.speed = speed  # Truck speed in mph
-        self.currentLocation = currentLocation  # Current truck location
-        self.departTime = departTime  # Initial departure time (can be updated)
-        self.capacity = capacity  # Max capacity (16 packages)
-        self.packageInventory = []  # Packages loaded onto the truck
-        self.milesTotal = 0  # Total miles traveled
-        self.milesTotal_list = []  # List of miles traveled
-        self.returnTime = None  # Time the truck returns to hub
-        self.current_time = departTime  # Tracks when deliveries occur
-        self.atHub = True  # True if truck is at the hub
+        self.speed = speed 
+        self.currentLocation = currentLocation 
+        self.departTime = departTime
+        self.capacity = capacity 
+        self.packageInventory = [] 
+        self.milesTotal = 0  
+        self.milesTotal_list = [] 
+        self.returnTime = None  
+        self.current_time = departTime  
+        self.atHub = True 
 
     def __str__(self):
-        return f"🚛 Truck {self.truckID} | Speed: {self.speed} mph | Miles: {self.milesTotal} | Location: {self.currentLocation} | Depart Time: {self.departTime.strftime('%I:%M %p')} | Return Time: {self.returnTime.strftime('%I:%M %p') if self.returnTime else 'N/A'} | Packages: {len(self.packageInventory)}/{self.capacity}"
+        return f"Truck {self.truckID} | Speed: {self.speed} mph | Miles: {self.milesTotal} | Location: {self.currentLocation} | Depart Time: {self.departTime.strftime('%I:%M %p')} | Return Time: {self.returnTime.strftime('%I:%M %p') if self.returnTime else 'N/A'} | Packages: {len(self.packageInventory)}/{self.capacity}"
 
     def drive_to(self, new_location, distance):
+        """
+        Method to simulate driving the truck to a new location.
+        Updates the truck's current location, time, and miles traveled.
+
+        new_location: The destination location
+        distance: The distance to the new location
+        """
         starting_location = self.currentLocation
         travel_time = timedelta(minutes=(distance / self.speed) * 60)  # Convert hours to minutes
         self.current_time += travel_time
@@ -34,19 +45,27 @@ class Truck:
 
     def load_package(self, package, package_table):
         """
-        Loads a package onto the truck if space is available.
-        Also updates package status in the hash table.
+        Method to load a package onto the truck.
+        Updates the package's status and the package table.
+
+        package: The package to be loaded
+        package_table: The hash table containing all packages
         """
+        # If the truck is not full, load the package
         if len(self.packageInventory) < self.capacity:
             self.packageInventory.append(package)
-            package.status = "En Route"  # Update status
-            package_table.insert(package.packageID, package)  # Update package table
+            package.status = "En Route" 
+            package_table.insert(package.packageID, package)
             return True
-        return False  # If truck is full, return False
+        
+        # If the truck is full, return False
+        return False  
 
     def return_to_hub(self):
         """
-        Marks the truck as returning to the hub and updates time.
+        Method to simulate the truck returning to the hub.
+        Updates the truck's current location, time, and
+        sets the truck's return time.
         """
         self.atHub = True
-        self.returnTime = self.current_time  # Truck's return time is when it arrives back
+        self.returnTime = self.current_time 

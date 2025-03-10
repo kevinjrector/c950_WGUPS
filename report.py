@@ -131,10 +131,14 @@ def generate_packageStatus(set_time, trucks, package_table, package_id):
 
     set_time = datetime.strptime(set_time, '%I:%M %p') 
 
-    print(f"\n📅 Package Status Report at {set_time.strftime('%I:%M %p')}")
+    print(f"\n==Package Status Report== at {set_time.strftime('%I:%M %p')}")
 
     # Find the package in the package hash table
-    package = package_table.search(package_id)
+    if package_table.search(package_id) is None:
+        print(f"Package {package_id} not found.")
+        return None
+    else:
+        package = package_table.search(package_id)
 
     # Find the truck assigned to the package
     for t in trucks:
@@ -161,13 +165,12 @@ def generate_packageStatus(set_time, trucks, package_table, package_id):
         elif truck.departTime.time() > set_time.time():
             package.status = "At Hub"
 
-    print("\n")
 
     # Print the package status
     if package.status == "Erroneous":
-        print(f"Package {package_id} Status: {package.status} ([ALERT]: Will be updated at {package.updateTime.strftime('%I:%M %p')})")
+        print(f"Package {package_id} Status: {package.status} ([ALERT]: Will be updated at {package.updateTime.strftime('%I:%M %p')})\n")
     else:
-        print(f"Package {package_id} Status: {package.status}")
+        print(f"Package {package_id} Status: {package.status}\n")
 
 
 

@@ -1,4 +1,4 @@
-# Kevin J Rector - Student ID: XXXXXXX  
+# Kevin J Rector - Student ID: 000958309  
 """
 This is the main file that executes the delivery routing program. It loads the package data, plans the deliveries, and runs the user interface.
 
@@ -16,17 +16,18 @@ from routing import plan_deliveries
 from truck import Truck
 import user_interface
 
-
+# Constants for the delivery routing program
 TRUCK_SPEED = 18  # MPH
 TRUCK_CAPACITY = 16
 TOTAL_TRUCKS = 3
 TOTAL_DRIVERS = 2
 HUB_LOCATION = "4001 South 700 East"
-
 PACKAGE_FILE = './data/package_file.csv'
 
+# Load the package data from the CSV file and initialize the hash table
 package_hashTable = load_package_data(PACKAGE_FILE)
 
+# Departure times for each truck
 departure_times = [
     datetime.combine(datetime.today(), time(8, 0)),  
     datetime.combine(datetime.today(), time(9, 5)),   
@@ -45,10 +46,10 @@ trucks = [
     ) for i in range(TOTAL_TRUCKS)
 ]
 
-
+# Plan the deliveries for the trucks
 plan_deliveries(trucks, package_hashTable)
 
-
-user_interface.userInterface(trucks, package_hashTable)  # Loads the user interface
+# Load the user interface to interact with the program
+user_interface.userInterface(trucks, package_hashTable)  
 
 
