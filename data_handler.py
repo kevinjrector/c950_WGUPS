@@ -11,6 +11,8 @@ DISTANCE_FILE = "./data/distance_file.csv"
 def load_package_data(file):
     """
     Loads package data from a CSV file and populates the package hash table.
+
+    Returns the populated hash table.
     """
     # Create a hash table to store the package data
     package_table = ChainingHashTable()  
@@ -42,6 +44,8 @@ def load_package_data(file):
 def load_address_data(file):
     """
     Loads address data from a CSV file and returns a dictionary with addresses as keys and indices as values
+
+    Returns the populated address dictionary.
     """
     # Initialize an empty dictionary to store the address data
     address_dict = {}
@@ -63,6 +67,8 @@ def load_address_data(file):
 def load_distance_data(file):
     """
     Loads distance data from a CSV file and returns a 2D list representing the distance between locations
+
+    Returns the populated distance matrix.
     """
     distance_matrix = []
 
@@ -90,6 +96,8 @@ def extract_address(address, address_dict):
 
     address: The address to look up
     address_dict: The dictionary containing address data
+
+    Returns the index of the address in the dictionary.
     """
     
     # Check if the address exists in the dictionary and return the index
@@ -108,6 +116,8 @@ def distanceBetween(index1, index2, distance_matrix):
     index1: The index of the first location
     index2: The index of the second location
     distance_matrix: The 2D list containing distance data
+
+    Returns the distance between the two locations.
     """
     if index1 is not None and index2 is not None:
         distance = distance_matrix[index1][index2]

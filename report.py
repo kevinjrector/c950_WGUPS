@@ -14,6 +14,8 @@ def miles_traveled(set_time, truck, delivered_count):
     set_time: datetime object indicating the time at which the miles are calculated
     truck: Truck object for which miles are calculated
     delivered_count: Number of packages delivered by the truck up to `set_time`
+
+    Returns the total miles traveled by the truck at `set_time`.
     """
     # If the truck hasn't left yet, return 0 miles
     if truck.departTime.time() > set_time.time():
@@ -44,6 +46,8 @@ def generate_report(set_time, trucks, package_table):
     set_time: datetime object indicating the time at which the report is generated
     trucks: List of Truck objects
     package_table: HashTable containing all packages
+
+    Returns the generated report.
     """
 
     set_time = datetime.strptime(set_time, '%I:%M %p')
@@ -127,6 +131,8 @@ def generate_packageStatus(set_time, trucks, package_table, package_id):
     trucks: List of Truck objects
     package_table: HashTable containing all packages
     package_id: ID of the package to generate the report
+
+    Returns the status of the package.
     """
 
     set_time = datetime.strptime(set_time, '%I:%M %p') 

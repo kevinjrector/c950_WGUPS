@@ -8,6 +8,8 @@ import report
 def get_report_time():
     """
     Prompts the user to enter the time for the report and ensures it follows 'HH:MM AM/PM' format.
+
+    Returns the user input time.
     """
     while True:
         user_input = input("Enter the time for the report (e.g., '10:30 AM'): ").strip()

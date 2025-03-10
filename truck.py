@@ -50,6 +50,8 @@ class Truck:
 
         package: The package to be loaded
         package_table: The hash table containing all packages
+
+        Returns True if the package was successfully loaded, False if the truck is full.
         """
         # If the truck is not full, load the package
         if len(self.packageInventory) < self.capacity:
