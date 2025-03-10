@@ -52,7 +52,7 @@ def generate_report(set_time, trucks, package_table):
 
     set_time = datetime.strptime(set_time, '%I:%M %p')
     
-    print(f"\n📅 Report at {set_time.strftime('%I:%M %p')}")
+    print(f"\nGenerated Report at {set_time.strftime('%I:%M %p')}")
 
     totalMiles_allTrucks = 0
 

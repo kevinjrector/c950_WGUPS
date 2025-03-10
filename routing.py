@@ -155,7 +155,7 @@ def deliver_packages(truck, package_table):
     truck: Truck object to deliver packages
     package_table: HashTable containing all packages
     """
-    print(f"\n🚛 Truck {truck.truckID} STARTING route at {truck.current_time.strftime('%I:%M %p')} from {truck.currentLocation}.")
+    print(f"\nAttention: Truck {truck.truckID} STARTING route at {truck.current_time.strftime('%I:%M %p')} from {truck.currentLocation}.")
 
     packages_delivered = 0
 
@@ -318,7 +318,7 @@ def plan_deliveries(trucks, package_table):
         sum_miles += truck.milesTotal if truck.milesTotal > 0 else 0
     print(f"TOTAL MILES TRAVELED FOR ALL TRUCKS = {sum_miles:.2f} miles")
 
-    print("\n🎉 ALL PACKAGES DELIVERED! DAY COMPLETE.")
+    print("\nALL PACKAGES DELIVERED.")
 
 
 
