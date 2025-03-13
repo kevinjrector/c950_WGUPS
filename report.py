@@ -128,13 +128,13 @@ def generate_report(set_time, trucks, package_table):
                     packageDeadlineStatus = "Late"
                 else: # If the package is on time
                     packageDeadlineStatus = "On Schedule"
-                print(f"    - Package {package.packageID:<3}: {package.address:<25} ({package.status:<8} | {package.packageID:<2} = {packageDeadlineStatus})")
+                print(f"    - Package {package.packageID:<3}: {package.address:<25} | {package.status:<8} | Deadline: {package.deadline} ({package.packageID:<2} = {packageDeadlineStatus})")
 
             elif package.assignedTruck == truck.truckID and package.status == "At Hub": # If the package is at the hub
-                print(f"    - Package {package.packageID:<3}: {package.address:<25} ({package.status:<8} | {package.packageID:<2} = {packageDeadlineStatus}))")
+                print(f"    - Package {package.packageID:<3}: {package.address:<25} | {package.status:<8} | Deadline: {package.deadline} ({package.packageID:<2} = {packageDeadlineStatus})")
 
             elif package.assignedTruck == truck.truckID and package.status == "Not At Hub Yet": # If the package has not arrived at the hub yet
-                print(f"    - Package {package.packageID:<3}: {package.address:<25} ({package.status:<8} | {package.packageID:<2} = {packageDeadlineStatus})")
+                print(f"    - Package {package.packageID:<3}: {package.address:<25} | {package.status:<8} | Deadline: {package.deadline} ({package.packageID:<2} = {packageDeadlineStatus})")
             
 
         # Print the erroneous packages
