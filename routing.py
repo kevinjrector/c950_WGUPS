@@ -246,6 +246,12 @@ def plan_deliveries(trucks, package_table):
     group_A_packages = [package_table.search(i) for i in [20, 13, 15, 19, 14, 16]]
     delayed_packages_truck2 = [package_table.search(i) for i in [6, 25, 28, 32]]
 
+    # Update Arrival Time for Delayed Packages
+    for package in range(1, 41):
+        package = package_table.search(package)
+        if package in delayed_packages_truck2:
+            package.hubArrivalTime = datetime.combine(datetime.today(), time(9, 5))
+
     # Sort the grouped packages for loading
     group_A_packages = sortPackages_forLoading(group_A_packages)
 
@@ -318,7 +324,7 @@ def plan_deliveries(trucks, package_table):
         sum_miles += truck.milesTotal if truck.milesTotal > 0 else 0
     print(f"TOTAL MILES TRAVELED FOR ALL TRUCKS = {sum_miles:.2f} miles")
 
-    print("\nALL PACKAGES DELIVERED.")
+    print("\nALL PACKAGES DELIVERED.\n\n\n\n\n\n\n")
 
 
 

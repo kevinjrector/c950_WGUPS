@@ -21,6 +21,8 @@ class Package:
         self.assignedTruck = None
         self.updateTime = None
         self.oldAddress = None
+        self.lateStatus = False
+        self.hubArrivalTime = None
 
     def __str__(self):
         return "Package ID {}: {}, {}, {}, {} | Deadline: {} | Weight: {} kilos | Status: {} | Delivery Time: {}".format(

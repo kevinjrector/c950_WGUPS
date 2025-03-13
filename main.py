@@ -46,8 +46,10 @@ trucks = [
     ) for i in range(TOTAL_TRUCKS)
 ]
 
+
 # Plan the deliveries for the trucks
 plan_deliveries(trucks, package_hashTable)
+
 
 # Load the user interface to interact with the program
 user_interface.userInterface(trucks, package_hashTable)  
