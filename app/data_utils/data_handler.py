@@ -2,8 +2,8 @@
 This module handles the loading of data from CSV files and provides utility functions for extracting address data.
 """
 import csv
-from package import Package
-from hash_table import ChainingHashTable  # Import the custom hash table
+from app.models.package import Package
+from app.models.hash_table import ChainingHashTable  # Import the custom hash table
 
 ADDRESS_FILE = "./data/address_file.csv"
 DISTANCE_FILE = "./data/distance_file.csv"

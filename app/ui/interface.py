@@ -3,7 +3,7 @@ This module contains the user interface.
 The user interface allows the user to select options to generate reports or view package status.
 """
 
-import report
+import app.core.report as report
 
 def get_report_time():
     """

@@ -5,7 +5,7 @@ It includes functions to sort packages for loading and delivery, load trucks, an
 I used a greedy approach to optimize the delivery order based on distance and deadlines.
 """
 from datetime import datetime, timedelta, time
-from data_handler import load_address_data, load_distance_data, distanceBetween, extract_address
+from app.data_utils.data_handler import load_address_data, load_distance_data, distanceBetween, extract_address
 import heapq
 
 # Load address and distance data

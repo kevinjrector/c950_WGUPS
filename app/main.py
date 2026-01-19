@@ -11,10 +11,10 @@ This is the main file that executes the delivery routing program. It loads the p
 """
 
 from datetime import datetime, time
-from data_handler import load_package_data
-from routing import plan_deliveries
-from truck import Truck
-import user_interface
+from app.data_utils.data_handler import load_package_data
+from app.core.routing import plan_deliveries
+from app.models.truck import Truck
+import app.ui.interface as interface
 
 # Constants for the delivery routing program
 TRUCK_SPEED = 18  # MPH
@@ -52,6 +52,6 @@ plan_deliveries(trucks, package_hashTable)
 
 
 # Load the user interface to interact with the program
-user_interface.userInterface(trucks, package_hashTable)  
+interface.userInterface(trucks, package_hashTable)  
 
 
