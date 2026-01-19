@@ -1,0 +1,13 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Environments
+.venv/
+env/
+venv/
+
+# Data and Logs
+*.log
+data/              # If the CSVs are proprietary or too large
+.env               # For secret keys/API tokens
